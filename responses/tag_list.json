@@ -1,0 +1,17 @@
+{
+  "data": {
+    "list": [
+      {
+        "id": 1145,
+        "item_count": 1,
+        "name": "casino"
+      },
+      {
+        "id": 1146,
+        "item_count": 1,
+        "name": "gamble"
+      }
+    ]
+  },
+  "success": true
+}

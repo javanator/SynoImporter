@@ -1,0 +1,27 @@
+{
+  "data": {
+    "album": {
+      "condition": {
+        "general_tag": [
+          1196
+        ],
+        "general_tag_policy": "or",
+        "user_id": 2
+      },
+      "create_time": 1741914110,
+      "end_time": 1343745522,
+      "id": 57,
+      "item_count": 1,
+      "name": "testalbum01",
+      "owner_user_id": 2,
+      "passphrase": "",
+      "shared": false,
+      "sort_by": "default",
+      "sort_direction": "default",
+      "start_time": 1343745522,
+      "type": "condition",
+      "version": 721875
+    }
+  },
+  "success": true
+}

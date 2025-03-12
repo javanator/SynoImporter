@@ -1,0 +1,9 @@
+**/.idea
+**/.venv
+**/dictionaries
+**/inspectionProfiles
+*.iml
+**/samples
+**/sample
+**/responses
+**/__pycache__

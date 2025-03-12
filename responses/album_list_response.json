@@ -1,0 +1,183 @@
+{
+  "data": {
+    "list": [
+      {
+        "additional": {
+          "sharing_info": {
+            "enable_password": false,
+            "expiration": 0,
+            "is_expired": false,
+            "mtime": 0,
+            "owner": {
+              "id": -1,
+              "name": ""
+            },
+            "passphrase": "",
+            "permission": [],
+            "privacy_type": "private",
+            "sharing_link": "",
+            "type": "album"
+          },
+          "thumbnail": {
+            "cache_key": "102613_1738436461",
+            "m": "ready",
+            "preview": "broken",
+            "sm": "ready",
+            "unit_id": 102613,
+            "xl": "ready"
+          }
+        },
+        "cant_migrate_condition": {},
+        "condition": {},
+        "create_time": 1738455102,
+        "end_time": 1738407645,
+        "freeze_album": false,
+        "id": 34,
+        "item_count": 3,
+        "name": "Black and Gold",
+        "owner_user_id": 2,
+        "passphrase": "",
+        "shared": false,
+        "sort_by": "default",
+        "sort_direction": "default",
+        "start_time": 1738407636,
+        "temporary_shared": false,
+        "type": "normal",
+        "version": 714735
+      },
+      {
+        "additional": {
+          "sharing_info": {
+            "enable_password": false,
+            "expiration": 0,
+            "is_expired": false,
+            "mtime": 0,
+            "owner": {
+              "id": -1,
+              "name": ""
+            },
+            "passphrase": "",
+            "permission": [],
+            "privacy_type": "private",
+            "sharing_link": "",
+            "type": "album"
+          },
+          "thumbnail": {
+            "cache_key": "102655_1738451163",
+            "m": "ready",
+            "preview": "broken",
+            "sm": "ready",
+            "unit_id": 102655,
+            "xl": "ready"
+          }
+        },
+        "cant_migrate_condition": {},
+        "condition": {},
+        "create_time": 1738455066,
+        "end_time": 1738422334,
+        "freeze_album": false,
+        "id": 33,
+        "item_count": 18,
+        "name": "Boy Birthday",
+        "owner_user_id": 2,
+        "passphrase": "",
+        "shared": false,
+        "sort_by": "default",
+        "sort_direction": "default",
+        "start_time": 1575737013,
+        "temporary_shared": false,
+        "type": "normal",
+        "version": 718129
+      },
+      {
+        "additional": {
+          "sharing_info": {
+            "enable_password": false,
+            "expiration": 0,
+            "is_expired": false,
+            "mtime": 0,
+            "owner": {
+              "id": -1,
+              "name": ""
+            },
+            "passphrase": "",
+            "permission": [],
+            "privacy_type": "private",
+            "sharing_link": "",
+            "type": "album"
+          },
+          "thumbnail": {
+            "cache_key": "101652_1735929029",
+            "m": "ready",
+            "preview": "broken",
+            "sm": "ready",
+            "unit_id": 101652,
+            "xl": "ready"
+          }
+        },
+        "cant_migrate_condition": {},
+        "condition": {},
+        "create_time": 1735929022,
+        "end_time": 1740166667,
+        "freeze_album": false,
+        "id": 31,
+        "item_count": 245,
+        "name": "Lex's Phone",
+        "owner_user_id": 2,
+        "passphrase": "",
+        "shared": false,
+        "sort_by": "default",
+        "sort_direction": "default",
+        "start_time": 1717092242,
+        "temporary_shared": false,
+        "type": "normal",
+        "version": 719725
+      },
+      {
+        "additional": {
+          "sharing_info": {
+            "enable_password": false,
+            "expiration": 0,
+            "is_expired": false,
+            "mtime": 0,
+            "owner": {
+              "id": -1,
+              "name": ""
+            },
+            "passphrase": "",
+            "permission": [],
+            "privacy_type": "private",
+            "sharing_link": "",
+            "type": "album"
+          },
+          "thumbnail": {
+            "cache_key": "99902_1729219465",
+            "m": "ready",
+            "preview": "broken",
+            "sm": "ready",
+            "unit_id": 99902,
+            "xl": "ready"
+          }
+        },
+        "cant_migrate_condition": {},
+        "condition": {},
+        "create_time": 1729274553,
+        "end_time": 1729186238,
+        "freeze_album": false,
+        "id": 2,
+        "item_count": 10,
+        "name": "Base and Textures",
+        "owner_user_id": 2,
+        "passphrase": "",
+        "shared": false,
+        "sort_by": "default",
+        "sort_direction": "default",
+        "start_time": 1729185793,
+        "temporary_shared": false,
+        "type": "normal",
+        "version": 695148
+      }
+    ]
+  },
+  "success": true
+}
