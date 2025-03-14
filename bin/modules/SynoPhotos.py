@@ -134,6 +134,11 @@ class SynoPhotos:
 
         return Response.model_validate_json(response.text)
 
+    '''
+    Create an album based on a tag. It is necessary for the media to have the tag added
+    prior to creating the album, or it will fail. This is because tags do not exist in
+    isolation. They are EXIF attributes. 
+    '''
     def create_tag_album(self, album_name, tag_id) -> Response[AlbumData] | None :
         json_data = json.loads('{"user_id":0,"item_type":[],"general_tag":[],"general_tag_policy":"or"}')
         json_data['general_tag'].append(tag_id)

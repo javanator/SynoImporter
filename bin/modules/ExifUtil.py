@@ -1,3 +1,8 @@
+'''
+This file is AI garbage. Clean it up later.
+TODO: Add types
+'''
+
 from fractions import Fraction
 
 import piexif

@@ -1,6 +1,7 @@
-#!/usr/bin/env python
+# Troubleshooting Help
 
-# Debugging Help
+- If creating a tag based album fails, ensure that there are photos with the tag first. It is not possible to create an empty tag based album
+
 
 ## SSH To Diskstation Server
 ```

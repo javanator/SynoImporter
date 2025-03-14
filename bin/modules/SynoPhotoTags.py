@@ -39,7 +39,7 @@ class SynoPhotoTags:
         self.photos_api = SynoPhotos(server)
 
     # Removes a tag from a photo
-    def remove_tag(self, tag_id, item_id_list):
+    def remove_tag(self, tag_id, item_id_list) -> Response[ErrorList]:
         api_path = self.server.apiInfo['data'][self.SYNO_API_PHOTOS_BROWSE_ITEM]['path']
         request_url = self.server.host +"/webapi/" + api_path
         request_url += "?api=" + self.SYNO_API_PHOTOS_BROWSE_ITEM
@@ -52,6 +52,8 @@ class SynoPhotoTags:
 
         # '{"data":{"error_list":[]},"success":true}'
         response = self.server.client.get(request_url)
+
+        return Response[ErrorList].model_validate_json(response.text)
 
 
     # Removes a tag by first deleting it from all photos where it is utilized.
@@ -71,7 +73,6 @@ class SynoPhotoTags:
     #     tags = self.get_tags()
     #     for tag in tags.data.list:
     #         self.remove_tag_name(tag.name)
-
 
     # Tag will get created. Save the response and ID.
     # Associate with a photo. A tag newly created needs to be added
@@ -94,11 +95,11 @@ class SynoPhotoTags:
         }
 
         #Idempotent. Will return existing id if one already exists
-        # response = self.server.client.post(request_url)
         response = self.server.client.post(request_url, data=form_data, verify=False, headers=headers)
 
         return Response[TagData].model_validate_json(response.text)
 
+    # Tags are exif data on the photo itself. EXIF data is indexed
     def add_tag(self, tag_id: int, photo_id_list: list[int]) -> Response[ErrorList]:
 
         api_path = self.server.apiInfo['data'][self.SYNO_API_PHOTOS_BROWSE_ITEM]['path']

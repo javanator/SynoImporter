@@ -1,3 +1,9 @@
+"""
+This file is also AI garbage. Clean it up later
+TODO: Add typing for awesomeness
+
+"""
+
 import json
 
 import piexif
