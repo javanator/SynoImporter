@@ -22,7 +22,6 @@ class SynoServer:
         self.session_did = None
         self.session_account_name = None
 
-
         self.client = requests.Session()
         self.client.verify=False
         self.SYNO_API_AUTH = "SYNO.API.Auth"

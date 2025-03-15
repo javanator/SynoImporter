@@ -4,7 +4,7 @@ from typing import List, Optional, Any, TypeVar, Generic
 
 from pydantic import BaseModel
 
-from bin.modules.SynoPhotos import SynoPhotos
+from src.SynoPhotos import SynoPhotos
 
 T = TypeVar('T')
 class Response(BaseModel,Generic[T]):

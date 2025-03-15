@@ -4,6 +4,7 @@ TODO: Add types
 '''
 
 from fractions import Fraction
+from typing import Any, Dict
 
 import piexif
 from PIL import Image
@@ -49,7 +50,7 @@ def dms_to_exif_format(dms_degrees, dms_minutes, dms_seconds):
     )
     return exif_format
 
-def merge_exif_data(existing_exif_dict, new_exif_dict):
+def merge_exif_data(existing_exif_dict: Dict[str,Any], new_exif_dict: Dict[str,Any])-> Dict[str,Any]:
     if existing_exif_dict is not None:
         modified_exif_dict = existing_exif_dict
     else:

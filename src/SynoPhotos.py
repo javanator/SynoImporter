@@ -84,13 +84,16 @@ class SynoPhotos:
         self.current_id=None
         self.current_id=self.get_userinfo()['data']['id']
 
-    def get_album_by_name(album_list: list, name: str) -> Album | None:
+    def get_album_by_name(self, album_list: list, name: str) -> Album | None:
         """
         Retrieve a single album from the list of albums using the name as the key.
         """
         for album_data in album_list:
             if album_data.get("name") == name:
                 return Album.from_dict(album_data)
+
+        return None
+
     def album_list(self)-> Response[AlbumList]:
         api_path = self.server.apiInfo['data'][self.SYNO_API_PHOTOS]['path']
         request_url = self.server.host +"/webapi/" + api_path
@@ -107,7 +110,7 @@ class SynoPhotos:
 
         return Response[AlbumList].model_validate_json(syno_photos_response.text)
 
-    def album_remove_by_name(self, album_name) -> Response | None:
+    def album_remove_by_name(self, album_name: str) -> Response | None:
         album_list_response = self.album_list()
         for album in album_list_response.data.list:
             if album_name == album.name:
@@ -119,7 +122,7 @@ class SynoPhotos:
             data=None,
             error=None)
 
-    def album_remove_by_id(self, album_id) -> Response:
+    def album_remove_by_id(self, album_id: int) -> Response:
         api_path = self.server.apiInfo['data'][self.SYNO_API_PHOTOS]['path']
         url = self.server.host +"/webapi/" + api_path
 
@@ -139,7 +142,7 @@ class SynoPhotos:
     prior to creating the album, or it will fail. This is because tags do not exist in
     isolation. They are EXIF attributes. 
     '''
-    def create_tag_album(self, album_name, tag_id) -> Response[AlbumData] | None :
+    def create_tag_album(self, album_name: str, tag_id: int) -> Response[AlbumData] | None :
         json_data = json.loads('{"user_id":0,"item_type":[],"general_tag":[],"general_tag_policy":"or"}')
         json_data['general_tag'].append(tag_id)
         json_data['user_id']=self.current_id

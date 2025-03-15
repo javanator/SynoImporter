@@ -1,8 +1,11 @@
-# Synology API Integration
+# What this is
 
 I created this to privatize and archive my photos from Google. I will try to make scripts modular so that they may be
 reused for other purposes. The synology API has been rather difficult to integrate with as there are not very many
-examples and barely any documentation. 
+examples and barely any documentation.
+
+Currently, API integration is functional, but overall script to import a Google takeout file contents is a work in
+progress
 
 # Troubleshooting Help
 
@@ -10,6 +13,9 @@ examples and barely any documentation.
   empty tag based album
 
 ## SSH To Diskstation Server
+
+This log file will show API activity and will sometimes provide more error details than what is returned in the HTTP
+response
 
 ```
 sudo vi /var/log/synoscgi.log

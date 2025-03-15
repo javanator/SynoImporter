@@ -2,25 +2,28 @@
 import sys
 from fractions import Fraction
 
-from bin.modules import SynoPhotos, SynoServer, Takeout
+from src.SynoServer import SynoServer
+from src.SynoPhotos import SynoPhotos
+from src.Takeout import Takeout
 import os
 import piexif
 import json
 from pathlib import Path
-import piexif
-from PIL import Image
+from PIL import Image, ExifTags
 import io
-from bin.modules import ExifUtil
-from bin.modules.model.Metadata import Metadata
+from src import ExifUtil
+from src.SynoPhotoTags import SynoPhotoTags
+from src.Takeout import PhotoMetadata, AlbumMetadata
 
-HOST = "http://" + os.path.join(sys.argv[1])
+HOST = "https://" + os.path.join(sys.argv[1])
 USERNAME = sys.argv[2]
 PASSWORD = sys.argv[3]
 INPUTPATH = sys.argv[4]
 
-server = SynoServer.SynoServer(HOST)
+server = SynoServer(HOST)
 server.login(USERNAME, PASSWORD)
-photos = SynoPhotos.SynoPhotos(server)
+photo_api = SynoPhotos(server)
+tag_api = SynoPhotoTags(server)
 
 def traverse_directory(directory, file_lambda, dir_lambda):
     try:
@@ -33,7 +36,7 @@ def traverse_directory(directory, file_lambda, dir_lambda):
             if os.path.isdir(full_path):
                 dir_lambda(full_path)
                 traverse_directory(full_path, file_lambda,dir_lambda)
-            else:
+            if os.path.isfile(full_path):
                 file_lambda(full_path)
     except Exception as e:
         print(f"Error reading directory {directory}: {e}")
@@ -45,30 +48,31 @@ def on_dir(dir_path):
 
         # Open the file and load its contents
         with open(metadata_file, 'r', encoding='utf-8') as file:
-            json_data = json.load(file)
+            # Create a Metadata object from the JSON contents
+            album_metadata = AlbumMetadata.model_validate_json(file.read())
 
-        # Create a Metadata object from the JSON contents
-        metadata = Metadata.from_json(json_data)
+            #Check if album exists. Create a new one if not.
+            #album_list = photo_api.album_list()
+            #existing_album = photo_api.get_album_by_name(album_list.data.list, album_metadata.title)
 
-        #Check if album exists. Create a new one if not.
-        album_list = photos.album_list()
-        existing_album = photos.get_album_by_name(album_list, metadata.title)
-
-        if existing_album is None:
-            album_tag_name="album_"+metadata.title
-            photos.create_tag(album_tag_name)
-            photos.create_tag_album(metadata.title)
+            #if existing_album is None:
+                #tag_response = tag_api.create_tag(album_metadata.title)
+                #photo_api.create_tag_album(album_metadata.title, tag_response.data.tag.id)
 
 
-def on_file(file_path):
+def on_file(file_path: str):
     if Path(file_path).suffix == ".json" and file_path.endswith("metadata.json") == False:
-        exif_data = Takeout.read_google_takeout_json(file_path)
-        image_file = os.path.dirname(file_path) + "/" + exif_data['title']
-        image = Image.open(image_file)
-        file_type = image.format
-        image = ExifUtil.merge_exif_data(image, exif_data)
-        print(image.getexif())
-    print(file_path)
+
+        with open(file_path, 'r', encoding='utf-8') as f:
+            photo_metadata = PhotoMetadata.model_validate_json(f.read())
+            exif_data = Takeout.read_google_takeout_json(photo_metadata)
+            image_file = os.path.dirname(file_path) + "/" + photo_metadata.title
+            image = Image.open(image_file)
+            file_type = image.format
+            image = ExifUtil.merge_exif_data(image._getexif(), exif_data)
+            print(file_path)
+            print(exif_data)
+
 
 
 
@@ -96,7 +100,9 @@ def on_file(file_path):
 #     with open("./sample/test.jpg", "wb") as output_file:
 #         output_file.write(output_stream.read())
 
-traverse_directory(INPUTPATH, on_file, on_dir)
+# traverse_directory(INPUTPATH, on_file, on_dir)
+on_file("samples/Takeout/Barbie 🩷/20220212_112850.jpg.json")
+
 server.logout()
 
 
