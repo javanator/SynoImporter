@@ -7,6 +7,15 @@ examples and barely any documentation.
 Currently, API integration is functional, but overall script to import a Google takeout file contents is a work in
 progress
 
+# Errata
+```
+sudo apt install libexiv2-dev libboost-python-dev
+```
+
+
+Synology photos stores tags as IPTC data in a field called "keywords". If scripting tag based albums, an optimization
+may be to write the keywords to the jpeg files prior to upload. This would save on network round-trips.
+
 # Troubleshooting Help
 
 - If creating a tag based album fails, ensure that there are photos with the tag first. It is not possible to create an

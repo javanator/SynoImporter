@@ -8,7 +8,7 @@ import json
 from typing import Optional, Dict, Any
 from pydantic import BaseModel
 from datetime import datetime
-import piexif
+from pyexiv2 import ImageMetadata
 from src import ExifUtil
 
 class DateInfo(BaseModel):
@@ -50,7 +50,7 @@ class MobileUpload(BaseModel):
 class GooglePhotosOrigin(BaseModel):
     mobileUpload: MobileUpload
 
-class PhotoMetadata(BaseModel):
+class TakeoutPhotoMetadata(BaseModel):
     title: str
     description: str
     imageViews: str
@@ -61,50 +61,27 @@ class PhotoMetadata(BaseModel):
     url: str
     googlePhotosOrigin: GooglePhotosOrigin
 
-class Takeout:
-    def read_google_takeout_json(photo_metadata: PhotoMetadata) -> Dict[str, dict]:
-        # Create EXIF-style dictionary
-        exif_data = {
-            "0th": {},  # Basic metadata (Model, Make, etc.)
-            "Exif": {},  # Timestamps and other detailed metadata
-            "GPS": {},  # GPS coordinates
-            "1st": {},  # Thumbnails and unused data
-        }
 
-        # Map "title", "description", "cameraMake", and "cameraModel" to "0th" tags
-        if photo_metadata.title:
-            exif_data["0th"][piexif.ImageIFD.ImageDescription] = photo_metadata.title.encode("utf-8")  # Image title
-        if "description" in photo_metadata.description:
-            exif_data["0th"][piexif.ImageIFD.XPComment] = photo_metadata.description.encode("utf-16")  # Optional description
 
-        # Map creation time (timestamps) to "Exif" tags
-        if photo_metadata.photoTakenTime and photo_metadata.photoTakenTime.timestamp:
-            timestamp = photo_metadata.photoTakenTime.timestamp
-            human_readable_time = photo_metadata.photoTakenTime.formatted
-            if timestamp:
-                # Convert timestamp to a formatted date (if not provided as "formatted")
-                dt = datetime.fromtimestamp(int(timestamp))
-                formatted_time = human_readable_time or dt.strftime("%Y:%m:%d %H:%M:%S")
-                exif_data["Exif"][piexif.ExifIFD.DateTimeOriginal] = formatted_time.encode("utf-8")
+class TakeoutPhotoDescriptor:
+    def __init__(self, takeout_photo_metadata: TakeoutPhotoMetadata):
+        self.takeout_photo_metadata: TakeoutPhotoMetadata = takeout_photo_metadata
 
-        # Map GPS data to "GPS" tags
-        if photo_metadata.geoDataExif:
-            gps_data = photo_metadata.geoDataExif
-            exif_data["GPS"][piexif.GPSIFD.GPSVersionID] = (2,0,0,0)
+    def set_exif_gps(self, image_metadata: ImageMetadata):
+
+        # Set GPS fields from takeout metadata to the image
+        if self.takeout_photo_metadata.geoDataExif:
+            gps_data = self.takeout_photo_metadata.geoDataExif
 
             if gps_data.latitude:
                 latitude = float(gps_data.get("latitude", 0))
-                dms = ExifUtil.deg_to_dms(latitude,["S", "N"])
-                exif_latitude = ExifUtil.dms_to_exif_format(dms[0], dms[1], dms[2])
-                exif_data["GPS"][piexif.GPSIFD.GPSLatitude] = exif_latitude
-                exif_data["GPS"][piexif.GPSIFD.GPSLatitudeRef] = dms[3]
+                latitude_dms = ExifUtil.deg_to_dms(latitude,["S", "N"])
+                image_metadata['Exif.GPSInfo.GPSLatitudeRef'] = [latitude_dms[3]]
+                image_metadata['Exif.GPSInfo.GPSLatitude'] = [latitude_dms[0],latitude_dms[1],latitude_dms[2]]
             if gps_data.longitude:
                 longitude = float(gps_data.get("longitude", 0))
-                dms = ExifUtil.deg_to_dms(longitude, ["W", "E"])
-                exif_data["GPS"][piexif.GPSIFD.GPSLongitude] = ExifUtil.dms_to_exif_format(dms[0], dms[1], dms[2])
-                exif_data["GPS"][piexif.GPSIFD.GPSLongitudeRef] = dms[3]
+                longitude_dms = ExifUtil.deg_to_dms(longitude, ["W", "E"])
+                image_metadata['Exif.GPSInfo.GPSLongitudeRef'] = [longitude_dms[3]]
+                image_metadata['Exif.GPSInfo.GPSLongitude'] = [longitude_dms[0],longitude_dms[1],longitude_dms[2]]
             if gps_data.altitude:
-                exif_data["GPS"][piexif.GPSIFD.GPSAltitude] = (int(gps_data["altitude"]), 1)
-
-        # Return formatted EXIF data dictionary
-        return exif_data
+                image_metadata['Exif.GPSInfo.GPSAltitudeRef'] = self.takeout_metadata.geoDataExif.altitudeRef
