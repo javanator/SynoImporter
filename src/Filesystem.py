@@ -9,8 +9,9 @@ def traverse_directory(directory: str, file_lambda, dir_lambda):
 
             # Check if the entry is a directory or a file
             if os.path.isdir(full_path):
-                dir_lambda(full_path)
                 traverse_directory(full_path, file_lambda,dir_lambda)
+                #Keeping this here for depth-first traversal
+                dir_lambda(full_path)
             else:
                 file_lambda(full_path)
     except Exception as e:

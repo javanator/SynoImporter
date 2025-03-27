@@ -1,7 +1,11 @@
 import json
 import mimetypes
 import os
+import tempfile
+from io import BytesIO, BufferedReader
 
+from pyexiv2 import ImageMetadata
+from PIL import Image
 from pydantic import BaseModel, Field
 from typing import List, Dict, Any, Optional, TypeVar, Generic
 from datetime import datetime
@@ -69,6 +73,12 @@ class AlbumList(BaseModel):
 
 class AlbumData(BaseModel):
     album: Album
+
+class ActionData(BaseModel):
+    action: str
+    id: int
+    unit_id: int
+
 
 class SynoPhotos:
     SYNO_API_PHOTOS="SYNO.SynologyDrive.Photos"
@@ -259,27 +269,24 @@ class SynoPhotos:
 
         return None
 
-    def photo_upload(self, filepath):
+    def photo_upload(self, image_bytes :bytes, name :str) -> Response[ActionData] | None:
         api_path = self.server.apiInfo['data'][self.SYNO_API_PHOTOS_UPLOAD]['path']
         url = self.server.host +"/webapi/" + api_path
 
-        mimetype = mimetypes.guess_type(filepath)
-        filename = os.path.basename(filepath)
+        filelike=BytesIO(image_bytes)
+        image = Image.open(filelike)
         params = {
             "api":self.SYNO_API_PHOTOS_UPLOAD,
-            "method":"upload_to_folder",
+            "method":"upload",
             "version":str(1),
-            "target_folder_id":str(3),
+            "uploadDestination":'"timeline"',
             "duplicate" : '"ignore"',
-            "name":'"'+filename+'"',
+            "name":'"'+name+'"',
+            "folder":'["PhotoLibrary"]'
             # "mtime":  Date.now().getTime()
         }
-        image = None
-        with open(filepath, "rb") as f:
-            image = f.read()
-
         files = {
-            "file": (filename, image, mimetype),
+            "file": (name, image_bytes, Image.MIME[image.format]),
         }
 
         headers = {
@@ -287,5 +294,6 @@ class SynoPhotos:
         }
 
         response = self.server.client.post(url, data=params, headers=headers, files=files, verify=False)
+        response_object = Response[ActionData].model_validate_json(response.text)
 
-        print(response.json())
+        return response_object
