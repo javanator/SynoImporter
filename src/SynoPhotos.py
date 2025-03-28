@@ -273,8 +273,7 @@ class SynoPhotos:
         api_path = self.server.apiInfo['data'][self.SYNO_API_PHOTOS_UPLOAD]['path']
         url = self.server.host +"/webapi/" + api_path
 
-        filelike=BytesIO(image_bytes)
-        image = Image.open(filelike)
+        image = Image.open(BytesIO(image_bytes))
         params = {
             "api":self.SYNO_API_PHOTOS_UPLOAD,
             "method":"upload",

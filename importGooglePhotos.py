@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import logging
 import os
 import sys
 import tempfile
@@ -7,9 +8,9 @@ from PIL import Image
 from pathlib import Path
 from pyexiv2 import ImageMetadata
 
-from src import Filesystem
+
 from src.SynoPhotoTags import SynoPhotoTags
-from src.SynoPhotos import SynoPhotos
+from src.SynoPhotos import SynoPhotos,ActionData, Response
 from src.SynoServer import SynoServer
 from src.Takeout import TakeoutPhotoMetadata, AlbumMetadata, TakeoutPhotoDescriptor
 
@@ -38,8 +39,8 @@ def tagify(text: str) -> str:
 
     return tag_name
 
-def on_dir(dir_path):
-    metadata_file = os.path.join(dir_path, "metadata.json")
+def on_dir(dir_path :str, files_results: [Response[ActionData]]):
+    metadata_file = Path(dir_path).joinpath( "metadata.json")
     if Path(metadata_file).exists():
         # Open the file and load its contents
         with open(metadata_file, 'r', encoding='utf-8') as file:
@@ -47,12 +48,14 @@ def on_dir(dir_path):
             album_metadata = AlbumMetadata.model_validate_json(file.read())
             album_tag_name = tagify(album_metadata.title)
             album_tag = tag_api.create_tag(tag_name=album_tag_name)
-            # create_album_response = photo_api.create_tag_album(album_name=album_tag_name,tag_id=album_tag.data.tag.id)
+            id_list = list(map(lambda response: response.data.id if response.success and response.data else None, files_results))
+            tag_photos_response = tag_api.add_tag(album_tag.data.tag.id, id_list)
+            create_album_response = photo_api.create_tag_album(album_name=album_metadata.title,tag_id=album_tag.data.tag.id)
             print(f"Importing album {album_metadata.title}")
 
 
-def on_file(file_path: str):
-    if Path(file_path).suffix == ".json" and file_path.endswith("metadata.json") == False:
+def on_file(file_path: str) -> ActionData | None:
+    if Path(file_path).suffix == ".json" and not file_path.endswith("metadata.json"):
         with (open(file_path, 'r', encoding='utf-8') as f):
             takeout_photo_metadata = TakeoutPhotoMetadata.model_validate_json(f.read())
             takeout_image_filename = os.path.dirname(file_path) + "/" + takeout_photo_metadata.title
@@ -78,6 +81,26 @@ def on_file(file_path: str):
                 uploaded_photo_response = photo_api.photo_upload(temporary_image.read(), takeout_photo_metadata.title)
 
                 print(f"Importing from temp file {temporary_image.name} image {original_image.filename}")
+                return uploaded_photo_response
+
+def traverse_directory(directory: str, file_lambda, dir_lambda) -> [ActionData]:
+        entries = os.listdir(directory)
+        results :[ActionData] = []
+        for entry in entries:
+            # Join the current directory path with the entry name
+            full_path = directory + "/" + entry
+
+            # Check if the entry is a directory or a file
+            if os.path.isdir(full_path):
+                recursed_result = traverse_directory(full_path, file_lambda,dir_lambda)
+                #Keeping this here for depth-first traversal
+                dir_lambda(full_path, recursed_result)
+            else:
+                result = file_lambda(full_path)
+                if result is not None:
+                    results.append(result)
+
+        return results
 
 if __name__ == "__main__":
     HOST = "https://" + os.path.join(sys.argv[1])
@@ -90,6 +113,10 @@ if __name__ == "__main__":
     photo_api = SynoPhotos(server)
     tag_api = SynoPhotoTags(server)
 
+    # logging.getLogger("requests").setLevel(logging.WARNING)
+    # logging.getLogger("urllib3").setLevel(logging.WARNING)
+    # logging.getLogger("http.client").setLevel(logging.WARNING)
+
     #This needs to be a depth-first search. Images need to be tagged FIRST in order to create a tag based album
-    Filesystem.traverse_directory(INPUTPATH, on_file, on_dir)
+    traverse_directory(INPUTPATH, on_file, on_dir)
     server.logout()

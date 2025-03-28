@@ -78,7 +78,7 @@ class SynoPhotoTags:
     # Associate with a photo. A tag newly created needs to be added
     # to at least one photo (maybe) before it will be listed or usable as an
     # album condition.
-    def create_tag(self, tag_name) -> Response[TagData]:
+    def create_tag(self, tag_name :str) -> Response[TagData]:
         api_path = self.server.apiInfo['data'][self.SYNO_API_PHOTOS_BROWSE_GENERAL_TAG]['path']
         request_url = self.server.host +"/webapi/" + api_path +"/SYNO.Foto.Browse.GeneralTag"
 
