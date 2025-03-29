@@ -94,13 +94,13 @@ class SynoPhotos:
         self.current_id=None
         self.current_id=self.get_userinfo()['data']['id']
 
-    def get_album_by_name(self, album_list: list, name: str) -> Album | None:
+    def get_album_by_name(self, album_list: list[Album], name: str) -> Album | None:
         """
         Retrieve a single album from the list of albums using the name as the key.
         """
         for album_data in album_list:
-            if album_data.get("name") == name:
-                return Album.from_dict(album_data)
+            if album_data.name == name:
+                return album_data
 
         return None
 

@@ -16,6 +16,7 @@ from src.Takeout import TakeoutPhotoMetadata, AlbumMetadata, TakeoutPhotoDescrip
 
 def add_synology_tag(image_metadata: ImageMetadata, tag: str):
     """
+    This mechanism does not seem to work, despite anecdotal reports.
     This function adds a synology photos tag directly to image metadata. The purpose is to avoid round trip service
     calls with the synology API by adding the tags directly to the image metadata.
     :param image_metadata:
@@ -35,7 +36,7 @@ def add_synology_tag(image_metadata: ImageMetadata, tag: str):
 def tagify(text: str) -> str:
     tag_name = text.encode('ascii', 'ignore').decode().strip()
     tag_name = tag_name.lower().replace(" ", "_").rstrip("_")
-    tag_name = "tag_"+tag_name
+    tag_name = "album_"+tag_name
 
     return tag_name
 
@@ -50,8 +51,11 @@ def on_dir(dir_path :str, files_results: [Response[ActionData]]):
             album_tag = tag_api.create_tag(tag_name=album_tag_name)
             id_list = list(map(lambda response: response.data.id if response.success and response.data else None, files_results))
             tag_photos_response = tag_api.add_tag(album_tag.data.tag.id, id_list)
-            create_album_response = photo_api.create_tag_album(album_name=album_metadata.title,tag_id=album_tag.data.tag.id)
-            print(f"Importing album {album_metadata.title}")
+            albums_response_list=photo_api.album_list()
+            existing_album = photo_api.get_album_by_name(albums_response_list.data.list, album_metadata.title)
+            if not existing_album:
+                create_album_response = photo_api.create_tag_album(album_name=album_metadata.title,tag_id=album_tag.data.tag.id)
+                print(f"Imported album {album_metadata.title}")
 
 
 def on_file(file_path: str) -> ActionData | None:
