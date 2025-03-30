@@ -4,12 +4,14 @@ import os
 import tempfile
 from io import BytesIO, BufferedReader
 
+from magic import Magic
 from pyexiv2 import ImageMetadata
 from PIL import Image
 from pydantic import BaseModel, Field
 from typing import List, Dict, Any, Optional, TypeVar, Generic
 from datetime import datetime
 from pydantic.dataclasses import dataclass
+from magic import Magic
 
 T = TypeVar('T')
 class ErrorDetails(BaseModel):
@@ -273,7 +275,8 @@ class SynoPhotos:
         api_path = self.server.apiInfo['data'][self.SYNO_API_PHOTOS_UPLOAD]['path']
         url = self.server.host +"/webapi/" + api_path
 
-        image = Image.open(BytesIO(image_bytes))
+        # image = Image.open(BytesIO(image_bytes))
+        mimetype = Magic(mime=True).from_buffer(image_bytes)
         params = {
             "api":self.SYNO_API_PHOTOS_UPLOAD,
             "method":"upload",
@@ -285,7 +288,7 @@ class SynoPhotos:
             # "mtime":  Date.now().getTime()
         }
         files = {
-            "file": (name, image_bytes, Image.MIME[image.format]),
+            "file": (name, image_bytes, mimetype),
         }
 
         headers = {

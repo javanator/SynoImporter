@@ -3,11 +3,13 @@ import logging
 import os
 import sys
 import tempfile
+from unittest import case
 
 from PIL import Image
 from pathlib import Path
 from pyexiv2 import ImageMetadata
-
+from magic import Magic
+from pillow_heif import register_heif_opener
 
 from src.SynoPhotoTags import SynoPhotoTags
 from src.SynoPhotos import SynoPhotos,ActionData, Response
@@ -59,33 +61,65 @@ def on_dir(dir_path :str, files_results: [Response[ActionData]]):
 
 
 def on_file(file_path: str) -> ActionData | None:
-    if Path(file_path).suffix == ".json" and not file_path.endswith("metadata.json"):
-        with (open(file_path, 'r', encoding='utf-8') as f):
-            takeout_photo_metadata = TakeoutPhotoMetadata.model_validate_json(f.read())
-            takeout_image_filename = os.path.dirname(file_path) + "/" + takeout_photo_metadata.title
-            takeout_album = os.path.basename(os.path.dirname(takeout_image_filename)).replace(" ", "_")
-            takeout_album_tag = tagify(takeout_album)
-            with Image.open(os.fsdecode(
-                    takeout_image_filename)) as original_image, tempfile.NamedTemporaryFile() as temporary_image:
-                original_image.save(temporary_image.name, format=original_image.format)
-                original_image_metadata = ImageMetadata(os.fspath(takeout_image_filename))
-                original_image_metadata.read()
+    excluded_files = ['metadata.json', 'print-subscriptions.json','shared_album_comments.json',
+                      'user-generated-memory-titles.json','metadata(1).json']
+    if Path(file_path).suffix == ".json" and not Path(file_path).name in excluded_files:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            takeout_file_metadata = TakeoutPhotoMetadata.model_validate_json(f.read())
+            takeout_file_filename = os.path.dirname(file_path) + "/" + takeout_file_metadata.title
 
-                temp_image_metadata = ImageMetadata(temporary_image.name)
-                temp_image_metadata.read()
-                add_synology_tag(temp_image_metadata, takeout_album_tag)
+            match file_type := check_file_type(takeout_file_filename):
+                case 'image':
+                    return import_image(takeout_file_filename, takeout_file_metadata)
+                case 'video':
+                    return import_video(takeout_file_filename, takeout_file_metadata)
+    return None
 
-                original_image_metadata.copy(temp_image_metadata)
-                photo_descriptor = TakeoutPhotoDescriptor(takeout_photo_metadata)
-                photo_descriptor.set_exif_gps(temp_image_metadata)
+def check_file_type(file_path):
+    mime = Magic(mime=True)
+    file_type = mime.from_file(file_path)
+    if file_type.startswith('image/'):
+        return 'image'
+    elif file_type.startswith('video/'):
+        return 'video'
+    return 'other'
 
-                temp_image_metadata.write()
+def import_video(takeout_video_filename, takeout_video_metadata) -> ActionData | None:
+    takeout_album = os.path.basename(os.path.dirname(takeout_video_filename)).replace(" ", "_")
+    takeout_album_tag = tagify(takeout_album)
 
-                #Upload the image
-                uploaded_photo_response = photo_api.photo_upload(temporary_image.read(), takeout_photo_metadata.title)
+    #No need to manipulate. Just upload
+    with open(os.fsdecode(takeout_video_filename),'rb') as video_file:
+        uploaded_movie_response = photo_api.photo_upload(image_bytes = video_file.read(), name = takeout_video_metadata.title)
+        print(f"Imported video {takeout_video_filename}")
+        return uploaded_movie_response
 
-                print(f"Importing from temp file {temporary_image.name} image {original_image.filename}")
-                return uploaded_photo_response
+
+def import_image(takeout_image_filename, takeout_photo_metadata) -> ActionData | None:
+    takeout_album = os.path.basename(os.path.dirname(takeout_image_filename)).replace(" ", "_")
+    takeout_album_tag = tagify(takeout_album)
+    with Image.open(os.fsdecode(
+            takeout_image_filename)) as original_image, tempfile.NamedTemporaryFile() as temporary_image:
+        original_image.save(temporary_image.name, format=original_image.format)
+        original_image_metadata = ImageMetadata(os.fspath(takeout_image_filename))
+        original_image_metadata.read()
+
+        temp_image_metadata = ImageMetadata(temporary_image.name)
+        temp_image_metadata.read()
+        add_synology_tag(temp_image_metadata, takeout_album_tag)
+
+        original_image_metadata.copy(temp_image_metadata)
+        photo_descriptor = TakeoutPhotoDescriptor(takeout_photo_metadata)
+        photo_descriptor.set_exif_gps(temp_image_metadata)
+
+        temp_image_metadata.write()
+
+        # Upload the image
+        uploaded_photo_response = photo_api.photo_upload(temporary_image.read(), takeout_photo_metadata.title)
+
+        print(f"Importing from temp file {temporary_image.name} image {original_image.filename}")
+        return uploaded_photo_response
+
 
 def traverse_directory(directory: str, file_lambda, dir_lambda) -> [ActionData]:
         entries = os.listdir(directory)
@@ -111,6 +145,8 @@ if __name__ == "__main__":
     USERNAME = sys.argv[2]
     PASSWORD = sys.argv[3]
     INPUTPATH = sys.argv[4]
+
+    register_heif_opener()
 
     server = SynoServer(HOST)
     server.login(USERNAME, PASSWORD)

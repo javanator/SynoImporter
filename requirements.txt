@@ -16,5 +16,6 @@ IPTCInfo3~=2.1.4
 python-xmp-toolkit~=2.0.2
 defusedxml~=0.8.0rc2
 py3exiv2~=0.9.3
-
+python-magic~=0.4.27
+pillow-heif~=0.22.0
 

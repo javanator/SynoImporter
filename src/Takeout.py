@@ -44,11 +44,15 @@ class DeviceFolder(BaseModel):
     localFolderName: str
 
 class MobileUpload(BaseModel):
-    deviceFolder: DeviceFolder
+    deviceFolder: Optional[DeviceFolder] = None
     deviceType: str
 
+class ThirdPartyApp(BaseModel):
+    appName: str
+
 class GooglePhotosOrigin(BaseModel):
-    mobileUpload: MobileUpload
+    mobileUpload: Optional[MobileUpload] = None
+    thirdPartyApp: Optional[ThirdPartyApp] = None
 
 class TakeoutPhotoMetadata(BaseModel):
     title: str
