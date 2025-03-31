@@ -61,19 +61,33 @@ def on_dir(dir_path :str, files_results: [Response[ActionData]]):
 
 
 def on_file(file_path: str) -> ActionData | None:
-    excluded_files = ['metadata.json', 'print-subscriptions.json','shared_album_comments.json',
-                      'user-generated-memory-titles.json','metadata(1).json']
-    if Path(file_path).suffix == ".json" and not Path(file_path).name in excluded_files:
-        with open(file_path, 'r', encoding='utf-8') as f:
-            takeout_file_metadata = TakeoutPhotoMetadata.model_validate_json(f.read())
-            takeout_file_filename = os.path.dirname(file_path) + "/" + takeout_file_metadata.title
+    try:
+        excluded_files = ['metadata.json', 'print-subscriptions.json','shared_album_comments.json',
+                          'user-generated-memory-titles.json','metadata(1).json']
+        if Path(file_path).suffix == ".json" and not Path(file_path).name in excluded_files:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                takeout_file_metadata = TakeoutPhotoMetadata.model_validate_json(f.read())
+                takeout_file_filename = sanitize_filename(str(Path(file_path).parent), takeout_file_metadata.title)
 
-            match file_type := check_file_type(takeout_file_filename):
-                case 'image':
-                    return import_image(takeout_file_filename, takeout_file_metadata)
-                case 'video':
-                    return import_video(takeout_file_filename, takeout_file_metadata)
+                if os.path.exists(takeout_file_filename):
+                    match file_type := check_file_type(takeout_file_filename):
+                        case 'image':
+                            return import_image(takeout_file_filename, takeout_file_metadata)
+                        case 'video':
+                            return import_video(takeout_file_filename, takeout_file_metadata)
+                else:
+                    print(f"Skipping {takeout_file_filename} because filename from json does not exist.")
+    except Exception as e:
+        print(f"Error processing {file_path}: {str(e)}")
+
     return None
+
+def sanitize_filename(file_path :str, takeout_file_metadata :str) ->str:
+    filename = "" + str(takeout_file_metadata)
+    filename = filename.replace('|','_')
+    filename = filename.replace(';','_')
+
+    return file_path + '/'+ filename
 
 def check_file_type(file_path):
     mime = Magic(mime=True)

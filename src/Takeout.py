@@ -5,11 +5,13 @@ TODO: Add typing for awesomeness
 """
 
 import json
+from fractions import Fraction
 from typing import Optional, Dict, Any
 from pydantic import BaseModel
 from datetime import datetime
 from pyexiv2 import ImageMetadata
 from src import ExifUtil
+from exif import GpsAltitudeRef
 
 class DateInfo(BaseModel):
     timestamp: str
@@ -78,14 +80,15 @@ class TakeoutPhotoDescriptor:
             gps_data = self.takeout_photo_metadata.geoDataExif
 
             if gps_data.latitude:
-                latitude = float(gps_data.get("latitude", 0))
+                latitude = float(gps_data.latitude)
                 latitude_dms = ExifUtil.deg_to_dms(latitude,["S", "N"])
                 image_metadata['Exif.GPSInfo.GPSLatitudeRef'] = [latitude_dms[3]]
                 image_metadata['Exif.GPSInfo.GPSLatitude'] = [latitude_dms[0],latitude_dms[1],latitude_dms[2]]
             if gps_data.longitude:
-                longitude = float(gps_data.get("longitude", 0))
+                longitude = float(gps_data.longitude)
                 longitude_dms = ExifUtil.deg_to_dms(longitude, ["W", "E"])
                 image_metadata['Exif.GPSInfo.GPSLongitudeRef'] = [longitude_dms[3]]
                 image_metadata['Exif.GPSInfo.GPSLongitude'] = [longitude_dms[0],longitude_dms[1],longitude_dms[2]]
             if gps_data.altitude:
-                image_metadata['Exif.GPSInfo.GPSAltitudeRef'] = self.takeout_metadata.geoDataExif.altitudeRef
+                image_metadata['Exif.GPSInfo.GPSAltitude'] = Fraction(gps_data.altitude).limit_denominator(1)
+                image_metadata['Exif.GPSInfo.GPSAltitudeRef'] = '0' #1 if below sea level
