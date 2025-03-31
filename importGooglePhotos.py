@@ -49,15 +49,18 @@ def on_dir(dir_path :str, files_results: [Response[ActionData]]):
         with open(metadata_file, 'r', encoding='utf-8') as file:
             # Create a Metadata object from the JSON contents
             album_metadata = AlbumMetadata.model_validate_json(file.read())
-            album_tag_name = tagify(album_metadata.title)
-            album_tag = tag_api.create_tag(tag_name=album_tag_name)
-            id_list = list(map(lambda response: response.data.id if response.success and response.data else None, files_results))
-            tag_photos_response = tag_api.add_tag(album_tag.data.tag.id, id_list)
-            albums_response_list=photo_api.album_list()
-            existing_album = photo_api.get_album_by_name(albums_response_list.data.list, album_metadata.title)
-            if not existing_album:
-                create_album_response = photo_api.create_tag_album(album_name=album_metadata.title,tag_id=album_tag.data.tag.id)
-                print(f"Imported album {album_metadata.title}")
+
+            #Some empty albums exist with no contents to export other metadata. Skip them
+            if album_metadata.title is not None:
+                album_tag_name = tagify(album_metadata.title)
+                album_tag = tag_api.create_tag(tag_name=album_tag_name)
+                id_list = list(map(lambda response: response.data.id if response.success and response.data else None, files_results))
+                tag_photos_response = tag_api.add_tag(album_tag.data.tag.id, id_list)
+                albums_response_list=photo_api.album_list()
+                existing_album = photo_api.get_album_by_name(albums_response_list.data.list, album_metadata.title)
+                if not existing_album:
+                    create_album_response = photo_api.create_tag_album(album_name=album_metadata.title,tag_id=album_tag.data.tag.id)
+                    print(f"Imported album {album_metadata.title}")
 
 
 def on_file(file_path: str) -> ActionData | None:

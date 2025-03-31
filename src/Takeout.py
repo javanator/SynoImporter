@@ -13,20 +13,6 @@ from pyexiv2 import ImageMetadata
 from src import ExifUtil
 from exif import GpsAltitudeRef
 
-class DateInfo(BaseModel):
-    timestamp: str
-    formatted: str
-
-    def to_datetime(self) -> datetime:
-        """Convert the timestamp to a Python datetime object."""
-        return datetime.fromtimestamp(int(self.timestamp))
-
-class AlbumMetadata(BaseModel):
-    title: str
-    description: Optional[str] = ""
-    access: str
-    date: DateInfo
-
 class TimeInfo(BaseModel):
     timestamp: str
     formatted: str
@@ -34,6 +20,17 @@ class TimeInfo(BaseModel):
     def get_datetime(self) -> datetime:
         """Convert timestamp to datetime object"""
         return datetime.fromtimestamp(int(self.timestamp))
+class AlbumComment(BaseModel):
+    text: Optional[str]
+    creationTime: Optional[TimeInfo]
+
+class AlbumMetadata(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    access: Optional[str] = None
+    date: Optional[TimeInfo] = None
+    contentOwnerName: Optional[str] = None
+    sharedAlbumComments: Optional[list[AlbumComment]] = None
 
 class GeoData(BaseModel):
     latitude: float
@@ -60,10 +57,12 @@ class TakeoutPhotoMetadata(BaseModel):
     title: str
     description: str
     imageViews: str
-    creationTime: TimeInfo
-    photoTakenTime: TimeInfo
+    access: Optional[str] = None
+    date: Optional[TimeInfo] = None
+    creationTime: Optional[TimeInfo] = None
+    photoTakenTime: Optional[TimeInfo] = None
     geoData: GeoData
-    geoDataExif: GeoData
+    geoDataExif: Optional[GeoData] = None
     url: str
     googlePhotosOrigin: GooglePhotosOrigin
 
