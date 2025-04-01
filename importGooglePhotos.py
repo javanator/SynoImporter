@@ -3,6 +3,7 @@ import logging
 import os
 import sys
 import tempfile
+from io import BytesIO
 from unittest import case
 
 from PIL import Image
@@ -117,23 +118,26 @@ def import_image(takeout_image_filename, takeout_photo_metadata) -> ActionData |
     takeout_album_tag = tagify(takeout_album)
     with Image.open(os.fsdecode(
             takeout_image_filename)) as original_image, tempfile.NamedTemporaryFile() as temporary_image:
-        original_image.save(temporary_image.name, format=original_image.format)
-        original_image_metadata = ImageMetadata(os.fspath(takeout_image_filename))
-        original_image_metadata.read()
 
-        temp_image_metadata = ImageMetadata(temporary_image.name)
-        temp_image_metadata.read()
-        add_synology_tag(temp_image_metadata, takeout_album_tag)
+        if 'WEBP' == original_image.format:
+            #Cant write exif with webp. Upload Directly
+            uploaded_photo_response = photo_api.photo_upload(original_image.tobytes(), takeout_photo_metadata.title)
+        else:
+            original_image.save(temporary_image.name, format=original_image.format)
+            original_image_metadata = ImageMetadata(os.fspath(takeout_image_filename))
+            original_image_metadata.read()
+            temp_image_metadata = ImageMetadata(temporary_image.name)
+            temp_image_metadata.read()
+            original_image_metadata.copy(temp_image_metadata)
+            add_synology_tag(temp_image_metadata, takeout_album_tag)
+            photo_descriptor = TakeoutPhotoDescriptor(takeout_photo_metadata)
+            photo_descriptor.set_exif_gps(temp_image_metadata)
+            photo_descriptor.set_exif_date_time(temp_image_metadata)
+            temp_image_metadata.write()
 
-        original_image_metadata.copy(temp_image_metadata)
-        photo_descriptor = TakeoutPhotoDescriptor(takeout_photo_metadata)
-        photo_descriptor.set_exif_gps(temp_image_metadata)
-        photo_descriptor.set_exif_date_time(temp_image_metadata)
+            # Upload the image
+            uploaded_photo_response = photo_api.photo_upload(temporary_image.read(), takeout_photo_metadata.title)
 
-        temp_image_metadata.write()
-
-        # Upload the image
-        uploaded_photo_response = photo_api.photo_upload(temporary_image.read(), takeout_photo_metadata.title)
 
         print(f"Importing from temp file {temporary_image.name} image {original_image.filename}")
         return uploaded_photo_response

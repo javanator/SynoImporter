@@ -66,7 +66,8 @@ class TakeoutPhotoMetadata(BaseModel):
     geoData: GeoData
     geoDataExif: Optional[GeoData] = None
     url: str
-    googlePhotosOrigin: GooglePhotosOrigin
+    googlePhotosOrigin: Optional[GooglePhotosOrigin] = None
+    albumMetadata: Optional[AlbumMetadata] = None
 
 
 
