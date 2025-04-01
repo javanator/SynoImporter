@@ -7,6 +7,8 @@ TODO: Add typing for awesomeness
 import json
 from fractions import Fraction
 from typing import Optional, Dict, Any
+
+import pyexiv2
 from pydantic import BaseModel
 from datetime import datetime
 from pyexiv2 import ImageMetadata
@@ -69,6 +71,8 @@ class TakeoutPhotoMetadata(BaseModel):
 
 
 class TakeoutPhotoDescriptor:
+    # See https://exiv2.org/tags.html for tag names
+    # DateTime Format is YYYY:MM:DD HH:MM:SS
     def __init__(self, takeout_photo_metadata: TakeoutPhotoMetadata):
         self.takeout_photo_metadata: TakeoutPhotoMetadata = takeout_photo_metadata
 
@@ -91,3 +95,13 @@ class TakeoutPhotoDescriptor:
             if gps_data.altitude:
                 image_metadata['Exif.GPSInfo.GPSAltitude'] = Fraction(gps_data.altitude).limit_denominator(1)
                 image_metadata['Exif.GPSInfo.GPSAltitudeRef'] = '0' #1 if below sea level
+
+    def set_exif_date_time(self, temp_image_metadata :ImageMetadata):
+        if self.takeout_photo_metadata.creationTime:
+            creation_time = self.takeout_photo_metadata.creationTime.get_datetime()
+            temp_image_metadata['Exif.Photo.DateTimeDigitized'] = creation_time.strftime("%Y:%m:%d %H:%M:%S")
+        if self.takeout_photo_metadata.photoTakenTime:
+            taken_time = self.takeout_photo_metadata.photoTakenTime.get_datetime()
+            temp_image_metadata['Exif.Image.DateTime'] = taken_time.strftime("%Y:%m:%d %H:%M:%S")
+            temp_image_metadata['Exif.Photo.DateTimeOriginal'] = taken_time.strftime("%Y:%m:%d %H:%M:%S")
+        pass

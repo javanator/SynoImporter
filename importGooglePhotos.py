@@ -128,6 +128,7 @@ def import_image(takeout_image_filename, takeout_photo_metadata) -> ActionData |
         original_image_metadata.copy(temp_image_metadata)
         photo_descriptor = TakeoutPhotoDescriptor(takeout_photo_metadata)
         photo_descriptor.set_exif_gps(temp_image_metadata)
+        photo_descriptor.set_exif_date_time(temp_image_metadata)
 
         temp_image_metadata.write()
 
