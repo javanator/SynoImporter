@@ -6,7 +6,7 @@ import tempfile
 from io import BytesIO
 from unittest import case
 
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 from pathlib import Path
 from pyexiv2 import ImageMetadata
 from magic import Magic
@@ -116,12 +116,14 @@ def import_video(takeout_video_filename, takeout_video_metadata) -> ActionData |
 def import_image(takeout_image_filename, takeout_photo_metadata) -> ActionData | None:
     takeout_album = os.path.basename(os.path.dirname(takeout_image_filename)).replace(" ", "_")
     takeout_album_tag = tagify(takeout_album)
-    with Image.open(os.fsdecode(
-            takeout_image_filename)) as original_image, tempfile.NamedTemporaryFile() as temporary_image:
+    unicode_filename = os.fsdecode(takeout_image_filename)
+    with Image.open(unicode_filename) as original_image, tempfile.NamedTemporaryFile() as temporary_image:
 
         if 'WEBP' == original_image.format:
             #Cant write exif with webp. Upload Directly
-            uploaded_photo_response = photo_api.photo_upload(original_image.tobytes(), takeout_photo_metadata.title)
+            with open(unicode_filename, 'rb') as f:
+                uploaded_photo_response = photo_api.photo_upload(f.read(), takeout_photo_metadata.title)
+                print(f"Importing from original file image {original_image.filename}")
         else:
             original_image.save(temporary_image.name, format=original_image.format)
             original_image_metadata = ImageMetadata(os.fspath(takeout_image_filename))
@@ -137,9 +139,8 @@ def import_image(takeout_image_filename, takeout_photo_metadata) -> ActionData |
 
             # Upload the image
             uploaded_photo_response = photo_api.photo_upload(temporary_image.read(), takeout_photo_metadata.title)
+            print(f"Importing from temp file {temporary_image.name} image {original_image.filename}")
 
-
-        print(f"Importing from temp file {temporary_image.name} image {original_image.filename}")
         return uploaded_photo_response
 
 
